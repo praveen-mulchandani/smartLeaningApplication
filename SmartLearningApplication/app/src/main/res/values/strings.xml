@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">SmartLearningApplication</string>
+    <string name="demo_sample_question">What is your Name?</string>
+    <string name="start_quiz">Start Quiz</string>
+    <string name="total_question">Total - 4</string>
+</resources>
