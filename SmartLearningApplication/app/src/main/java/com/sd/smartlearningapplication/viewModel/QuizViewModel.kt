@@ -26,9 +26,10 @@ class QuizViewModel : ViewModel() {
         //update the result model on basis of type of question asked
         updateResultModel()
         //Time is end then submit is pressed
-        if (mTimer == 10) {
+        if (answer.equals("skip")) {
             mQuestion!!.correctlyAnswered = 2
             mQuestion = getNextQuestion()
+            mQuestionResultModel!!.skippedAns++
         } else if (mQuestion?.correctAns.equals(answer)) {
             mQuestion!!.correctlyAnswered = 1
             mQuestionResultModel!!.rightAnswer++

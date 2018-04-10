@@ -14,6 +14,7 @@ import com.sd.smartlearningapplication.viewModel.QuizViewModel
 import kotlinx.android.synthetic.main.question_header.*
 import kotlinx.android.synthetic.main.quiz_component.*
 import kotlinx.android.synthetic.main.single_choice_question.*
+import org.jetbrains.anko.design.snackbar
 
 
 class QuizActivity : AppCompatActivity() {
@@ -33,7 +34,7 @@ class QuizActivity : AppCompatActivity() {
     private fun updateView() {
         //TODO:need tp update count when all questions are ready
         if (mViewModel!!.mTotalQuestions < 5) {
-            val animate = TranslateAnimation(llQuizComponent.width +0.0f, 0f, 0f, 0f)
+            val animate = TranslateAnimation(llQuizComponent.width + 0.0f, 0f, 0f, 0f)
             animate.duration = 250
             animate.fillAfter = true
             llQuizComponent.startAnimation(animate)
@@ -83,7 +84,6 @@ class QuizActivity : AppCompatActivity() {
                     mViewModel!!.mTimer++
                     progressbar.progress = 100
                     setTimerText()
-                    updateView()
                 }
 
             }
@@ -96,13 +96,26 @@ class QuizActivity : AppCompatActivity() {
     }
 
     fun submitClick(view: View) {
-        val checkedId: Int = radio_group.checkedRadioButtonId
-        val ans: String = findViewById<RadioButton>(checkedId).text.toString()
-        radio_group.clearCheck()
-        updateViewModelAnswer(ans)
-        updateView()
-        mViewModel!!.mTimer = 0
-        setCounter()
+        if(view.id==R.id.btnSubmit) {
+            val checkedId: Int = radio_group.checkedRadioButtonId
+            if (checkedId != -1) {
+                val ans: String = findViewById<RadioButton>(checkedId).text.toString()
+                radio_group.clearCheck()
+                updateViewModelAnswer(ans)
+                updateView()
+                mViewModel!!.mTimer = 0
+                setCounter()
+            } else {
+                snackbar(llQuizComponent, "Please check an answer")
+            }
+        }
+        else{
+            radio_group.clearCheck()
+            updateViewModelAnswer("skip")
+            updateView()
+            mViewModel!!.mTimer = 0
+            setCounter()
+        }
 
     }
 
