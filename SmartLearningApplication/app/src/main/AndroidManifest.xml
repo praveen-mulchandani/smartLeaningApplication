@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.sd.smartlearningapplication">
 
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -11,7 +12,8 @@
         android:theme="@style/AppTheme">
         <activity android:name=".ui.QuizActivity">
         </activity>
-        <activity android:name=".ui.QuizResultActivity"
+        <activity
+            android:name=".ui.QuizResultActivity"
             android:launchMode="singleTop"
             >
         </activity>

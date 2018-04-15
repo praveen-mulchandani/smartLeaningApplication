@@ -1,5 +1,7 @@
 package com.sd.smartlearningapplication.ui
 
+import android.app.ProgressDialog
+import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
 import android.os.Bundle
@@ -10,6 +12,7 @@ import android.view.animation.TranslateAnimation
 import android.widget.RadioButton
 import com.sd.smartlearningapplication.R
 import com.sd.smartlearningapplication.model.QuestionModel
+import com.sd.smartlearningapplication.utìls.Resource
 import com.sd.smartlearningapplication.viewModel.QuizViewModel
 import kotlinx.android.synthetic.main.question_header.*
 import kotlinx.android.synthetic.main.quiz_component.*
@@ -21,15 +24,42 @@ class QuizActivity : AppCompatActivity() {
 
     private var mCountDownTimer: CountDownTimer? = null
     private var mViewModel: QuizViewModel? = null
+    private var progress: ProgressDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.quiz_component)
         mViewModel = ViewModelProviders.of(this).get(QuizViewModel::class.java)
+        progress = ProgressDialog(this, 0)
+        progress!!.setTitle("Loading")
+        progress!!.setMessage("Wait while loading...")
+        progress!!.setCancelable(false) // disable dismiss by tapping outside of the dialog
+        progress!!.show()
         mViewModel!!.init()
-        setCounter()
-        updateView()
+        observeViewModel();
     }
+
+    private fun observeViewModel() {
+        // Update the list when the data changes
+        mViewModel?.mQuestionListObservable?.observe(this, Observer<Resource<List<QuestionModel>>> { resource ->
+            progress!!.hide()
+            if (resource != null) {
+                when (resource.status) {
+                    Resource.Status.SUCCESS -> {
+                        if (resource.data != null) {
+                            mViewModel?.initQuestions(resource.data)
+                            setCounter()
+                            updateView()
+                        }
+                    }
+                    Resource.Status.ERROR -> {
+                        snackbar(llQuizComponent, "Error:" + resource.exception)
+                    }
+                }
+            }
+        })
+    }
+
 
     private fun updateView() {
         //TODO:need tp update count when all questions are ready
@@ -96,7 +126,7 @@ class QuizActivity : AppCompatActivity() {
     }
 
     fun submitClick(view: View) {
-        if(view.id==R.id.btnSubmit) {
+        if (view.id == R.id.btnSubmit) {
             val checkedId: Int = radio_group.checkedRadioButtonId
             if (checkedId != -1) {
                 val ans: String = findViewById<RadioButton>(checkedId).text.toString()
@@ -108,8 +138,7 @@ class QuizActivity : AppCompatActivity() {
             } else {
                 snackbar(llQuizComponent, "Please check an answer")
             }
-        }
-        else{
+        } else {
             radio_group.clearCheck()
             updateViewModelAnswer("skip")
             updateView()

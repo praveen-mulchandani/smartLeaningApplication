@@ -5,6 +5,6 @@ import com.sd.smartlearningapplication.model.QuestionResultModel
 
 //Todo find better ways to transfer large data  between activities
 object DataTransferUtil {
-    var mQuestionList: MutableList<QuestionModel> = ArrayList()
+    var mQuestionList: List<QuestionModel> = ArrayList()
     var mQuestionResultModel: QuestionResultModel? = null
 }

@@ -1,10 +1,14 @@
 package com.sd.smartlearningapplication.viewModel
 
+import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.ViewModel
 import com.sd.smartlearningapplication.enums.TypeOfQuestion
 import com.sd.smartlearningapplication.model.QuestionModel
 import com.sd.smartlearningapplication.model.QuestionResultModel
+import com.sd.smartlearningapplication.network.QuestionRepository
 import com.sd.smartlearningapplication.utìls.DataTransferUtil
+import com.sd.smartlearningapplication.utìls.Resource
+
 
 class QuizViewModel : ViewModel() {
     var mTimer: Int = 0
@@ -13,9 +17,14 @@ class QuizViewModel : ViewModel() {
     var mTypeOfQuestion: TypeOfQuestion = TypeOfQuestion.EASY
     var mTotalQuestions: Int = 1
     var mQuestionResultModel: QuestionResultModel? = null
+    var mQuestionListObservable: LiveData<Resource<List<QuestionModel>>>? = null
 
     fun init() {
-        mQuestionList = getQuestionList()
+        mQuestionListObservable = QuestionRepository.getQuestionsList()
+    }
+
+    fun initQuestions(questionList: List<QuestionModel>) {
+        mQuestionList = questionList.toMutableList()
         mQuestion = mQuestionList[0]
         mQuestion!!.isDone = true
         mQuestionResultModel = QuestionResultModel()
@@ -86,39 +95,4 @@ class QuizViewModel : ViewModel() {
         DataTransferUtil.mQuestionResultModel = mQuestionResultModel
     }
 
-    //Todo: Use live data to fetch questions and ans
-    private fun getQuestionList(): MutableList<QuestionModel> {
-        return object : java.util.ArrayList<QuestionModel>() {
-            init {
-                add(QuestionModel(question = "Who is current prime minister of India?", choiceOne = "Narendra Modi",
-                        choiceTwo = "Manmohan Singh", choiceThree = "Pranav Mukherjee", choiceFour = "Ram Nath Kovind",
-                        difficultyLevel = 1, correctAns = "Narendra Modi"))
-                add(QuestionModel(question = "Who wrote National Anthem?", choiceOne = "Mohammad Iqbal",
-                        choiceTwo = "Rabindra Nath Tagore", choiceThree = "Bankim Chandra Chatterjee", choiceFour = "Girija Kumar Mathur",
-                        difficultyLevel = 1, correctAns = "Ram Nath Kovind"))
-                add(QuestionModel(question = "Which of the following is India's capital?", choiceOne = "Mumbai",
-                        choiceTwo = "Banglore", choiceThree = "Kolkata", choiceFour = "Delhi",
-                        difficultyLevel = 1, correctAns = "Delhi"))
-                add(QuestionModel(question = "Where is Taj Mahal situated?", choiceOne = "Agra",
-                        choiceTwo = "Delhi", choiceThree = "Chennai", choiceFour = "Lucknow",
-                        difficultyLevel = 1, correctAns = "Agra"))
-                add(QuestionModel(question = "Who is current president of India?", choiceOne = "Narendra Modi",
-                        choiceTwo = "Manmohan Singh", choiceThree = "Pranav Mukherjee", choiceFour = "Ram Nath Kovind",
-                        difficultyLevel = 2, correctAns = "Ram Nath Kovind"))
-                add(QuestionModel(question = "WHich city is known as \"City of Oranges\"?", choiceOne = "Nagpur",
-                        choiceTwo = "Raipur", choiceThree = "Kanpur", choiceFour = "Jodhpur",
-                        difficultyLevel = 2, correctAns = "Nagpur"))
-                add(QuestionModel(question = "Who is 1st president of India?", choiceOne = "Narendra Modi",
-                        choiceTwo = "Rajendra Prasad", choiceThree = "Pranav Mukherjee", choiceFour = "Jawahar Lal Nehru",
-                        difficultyLevel = 2, correctAns = "Rajendra Prasad"))
-                add(QuestionModel(question = "Which is India's National song?", choiceOne = "Jana Gana Mana",
-                        choiceTwo = "Vande Mataram", choiceThree = "Saare Jaha se Accha", choiceFour = "Hum Honge Kamayab",
-                        difficultyLevel = 3, correctAns = "Vande Mataram"))
-                add(QuestionModel(question = "Which of the following is not a planet?", choiceOne = "Neptune",
-                        choiceTwo = "Pluto", choiceThree = "Mars", choiceFour = "Venus",
-                        difficultyLevel = 3, correctAns = "Pluto"))
-            }
-        }
-
-    }
 }
