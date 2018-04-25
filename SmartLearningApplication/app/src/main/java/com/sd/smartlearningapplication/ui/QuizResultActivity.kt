@@ -41,9 +41,9 @@ class QuizResultActivity : AppCompatActivity() {
 
         questionResultModel.mediumAverageTime = calculateAverageTime(questionResultModel.mediumAverageTime,
                 questionResultModel.mediumQuestionsAnswered)
-        val inputArray = floatArrayOf(questionResultModel.hardQuestionsAnswered.toFloat(),
-                questionResultModel.easyQuestionsAnswered.toFloat(),
-                questionResultModel.mediumQuestionsAnswered.toFloat(), questionResultModel.hardAverageTime,
+        val inputArray = floatArrayOf((15*questionResultModel.hardQuestionsAnswered/4).toFloat(),
+                (15*questionResultModel.easyQuestionsAnswered/4).toFloat(),
+                (15*questionResultModel.mediumQuestionsAnswered/4).toFloat(), questionResultModel.hardAverageTime,
                 questionResultModel.easyAverageTime, questionResultModel.mediumAverageTime)
 
         async(UI) {

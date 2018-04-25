@@ -6,17 +6,18 @@ import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.os.Handler
 import android.support.v7.app.AppCompatActivity
 import android.view.View
+import android.view.WindowManager
+import android.view.animation.Animation
 import android.view.animation.TranslateAnimation
-import android.widget.RadioButton
+import android.widget.Button
 import com.sd.smartlearningapplication.R
 import com.sd.smartlearningapplication.model.QuestionModel
 import com.sd.smartlearningapplication.utìls.Resource
 import com.sd.smartlearningapplication.viewModel.QuizViewModel
-import kotlinx.android.synthetic.main.question_header.*
-import kotlinx.android.synthetic.main.quiz_component.*
-import kotlinx.android.synthetic.main.single_choice_question.*
+import kotlinx.android.synthetic.main.quiz_main_layout.*
 import org.jetbrains.anko.design.snackbar
 
 
@@ -24,17 +25,11 @@ class QuizActivity : AppCompatActivity() {
 
     private var mCountDownTimer: CountDownTimer? = null
     private var mViewModel: QuizViewModel? = null
-    private var progress: ProgressDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.quiz_component)
+        setContentView(R.layout.quiz_main_layout)
         mViewModel = ViewModelProviders.of(this).get(QuizViewModel::class.java)
-        progress = ProgressDialog(this, 0)
-        progress!!.setTitle("Loading")
-        progress!!.setMessage("Wait while loading...")
-        progress!!.setCancelable(false) // disable dismiss by tapping outside of the dialog
-        progress!!.show()
         mViewModel!!.init()
         observeViewModel();
     }
@@ -42,18 +37,19 @@ class QuizActivity : AppCompatActivity() {
     private fun observeViewModel() {
         // Update the list when the data changes
         mViewModel?.mQuestionListObservable?.observe(this, Observer<Resource<List<QuestionModel>>> { resource ->
-            progress!!.hide()
+            loading_bar.visibility = View.GONE
             if (resource != null) {
                 when (resource.status) {
                     Resource.Status.SUCCESS -> {
+                        llQuizComponent.visibility = View.VISIBLE
                         if (resource.data != null) {
                             mViewModel?.initQuestions(resource.data)
-                            setCounter()
                             updateView()
                         }
                     }
                     Resource.Status.ERROR -> {
-                        snackbar(llQuizComponent, "Error:" + resource.exception)
+                        llQuizComponent.visibility = View.GONE
+                        snackbar(rl_quiz_question, "Error:" + resource.exception)
                     }
                 }
             }
@@ -62,21 +58,37 @@ class QuizActivity : AppCompatActivity() {
 
 
     private fun updateView() {
+        mViewModel!!.mTimer = 0
+        initBtnBackground()
         //TODO:need tp update count when all questions are ready
         if (mViewModel!!.mTotalQuestions < 5) {
-            val animate = TranslateAnimation(llQuizComponent.width + 0.0f, 0f, 0f, 0f)
+            val animate = TranslateAnimation(llQuizComponent.width + 0.0f, 0f, 0f,
+                    0f)
             animate.duration = 250
             animate.fillAfter = true
-            llQuizComponent.startAnimation(animate)
+            animate.setAnimationListener(object : Animation.AnimationListener {
+                override fun onAnimationStart(animation: Animation) {
 
-            val questionModel: QuestionModel? = mViewModel!!.mQuestion
-            if (questionModel != null) {
-                questionTextView.text = questionModel.question
-                radioButton1.text = questionModel.choiceOne
-                radioButton2.text = questionModel.choiceTwo
-                radioButton3.text = questionModel.choiceThree
-                radioButton4.text = questionModel.choiceFour
-            }
+                }
+
+                override fun onAnimationEnd(animation: Animation) {
+                    window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
+                    setCounter()
+                    val questionModel: QuestionModel? = mViewModel!!.mQuestion
+                    if (questionModel != null) {
+                        questionTextView.text = questionModel.question
+                        btnOption1.text = questionModel.choiceOne
+                        btnOption2.text = questionModel.choiceTwo
+                        btnOption3.text = questionModel.choiceThree
+                        btnOption4.text = questionModel.choiceFour
+                    }
+                }
+
+                override fun onAnimationRepeat(animation: Animation) {
+
+                }
+            })
+            llQuizComponent.startAnimation(animate)
         } else {
             mViewModel!!.initializeDataTransferUtil()
             startActivity(Intent(this, QuizResultActivity::class.java))
@@ -84,6 +96,13 @@ class QuizActivity : AppCompatActivity() {
         }
 
 
+    }
+
+    private fun initBtnBackground() {
+        btnOption1.background = getDrawable(R.drawable.quiz_button_selector)
+        btnOption2.background = getDrawable(R.drawable.quiz_button_selector)
+        btnOption3.background = getDrawable(R.drawable.quiz_button_selector)
+        btnOption4.background = getDrawable(R.drawable.quiz_button_selector)
     }
 
     private fun setCounter() {
@@ -126,26 +145,42 @@ class QuizActivity : AppCompatActivity() {
     }
 
     fun submitClick(view: View) {
-        if (view.id == R.id.btnSubmit) {
-            val checkedId: Int = radio_group.checkedRadioButtonId
-            if (checkedId != -1) {
-                val ans: String = findViewById<RadioButton>(checkedId).text.toString()
-                radio_group.clearCheck()
-                updateViewModelAnswer(ans)
-                updateView()
-                mViewModel!!.mTimer = 0
-                setCounter()
-            } else {
-                snackbar(llQuizComponent, "Please check an answer")
-            }
-        } else {
-            radio_group.clearCheck()
+        val correctButton: Button? = getCorrectAnsId()
+        correctButton?.background = getDrawable(R.drawable.quiz_button_selector_right_answer)
+        if (view.id == R.id.btnSkip) {
             updateViewModelAnswer("skip")
-            updateView()
-            mViewModel!!.mTimer = 0
-            setCounter()
+        } else {
+            val ans: String = findViewById<Button>(view.id).text.toString()
+            updateViewModelAnswer(ans)
+            if (view.id != correctButton?.id) {
+                view.background = getDrawable(R.drawable.quiz_button_selector_wrong_answer)
+            }
         }
+        mCountDownTimer!!.cancel()
+        window.setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE, WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
+        val mHandler = Handler()
+        mHandler.postDelayed(Runnable {
+            updateView()
+        }, 3000L)
+    }
 
+    private fun getCorrectAnsId(): Button? {
+        val ans: String? = mViewModel?.mQuestion?.correctAns
+        when (ans) {
+            btnOption1.text.toString() -> {
+                return btnOption1
+            }
+            btnOption2.text.toString() -> {
+                return btnOption2
+            }
+            btnOption3.text.toString() -> {
+                return btnOption3
+            }
+            btnOption4.text.toString() -> {
+                return btnOption4
+            }
+        }
+        return null
     }
 
     private fun updateViewModelAnswer(answer: String?) {
